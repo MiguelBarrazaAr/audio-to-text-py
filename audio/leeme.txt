@@ -1,0 +1,1 @@
+en esta carpeta se deben agregar los audio wav a procesar.
