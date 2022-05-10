@@ -9,9 +9,13 @@ if dirName == "":
 class FormatError(Exception):
     pass
     
+class AudioError(Exception):
+    pass
+    
 class Recognize():
     def __init__(self):
         self.re = sr.Recognizer()
+        self.error=0
     
     def run(self, audio, lang="es"):
         with sr.AudioFile(audio) as source:
@@ -19,11 +23,15 @@ class Recognize():
             return self.re.recognize_google(info_audio, language=lang)
     
     def processFile(self, dir, name):
+        fullName=name
         root=dir+"/"+name
         ext = name[-3:]
         name = name[:-4]
         if ext == "wav":
-            return self.run(root)
+            try:
+                return self.run(root)
+            except sr.UnknownValueError:
+                raise AudioError()
         else:
             raise FormatError()
     
@@ -36,6 +44,9 @@ class Recognize():
         for f in files:
             try:
                 data[name+"/"+f] = self.processFile(dir, f)
+            except AudioError:
+                data["error"+str(self.error)] = f
+                self.error+=1
             except FormatError:
                 pass
             sleep(0.1)
@@ -47,7 +58,7 @@ class Recognize():
             text=data[root]
             f.write(root+"|"+text+".\n")
         f.close()
-        print("fin del proceso. "+str(num)+" archivos procesados.")
+        print("fin del proceso. "+str(num)+" archivos procesados.\nHubo "+str(self.error)+" erores.")
 
 r=Recognize()
 try:
